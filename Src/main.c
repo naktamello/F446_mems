@@ -68,7 +68,7 @@ DMA_HandleTypeDef hdma_usart1_tx;
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
-
+USBD_HandleTypeDef USBD_Device;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -109,14 +109,24 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+  /* Init Device Library */
+  USBD_Init(&USBD_Device, &VCP_Desc, 0);
 
+  /* Add Supported Class */
+  USBD_RegisterClass(&USBD_Device, USBD_CDC_CLASS);
+
+  /* Add CDC Interface Class */
+  USBD_CDC_RegisterInterface(&USBD_Device, &USBD_CDC_fops);
+
+  /* Start Device Process */
+  USBD_Start(&USBD_Device);
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_USB_OTG_FS_PCD_Init();
-  MX_USART1_UART_Init();
+//  MX_GPIO_Init();
+//  MX_DMA_Init();
+//  MX_USB_OTG_FS_PCD_Init();
+//  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   char str[32];
   sprintf(str, "usb app\n");
@@ -129,7 +139,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    HAL_UART_Transmit_DMA(&huart1, str, strlen(str));
+//    HAL_UART_Transmit_DMA(&huart1, str, strlen(str));
     HAL_Delay(1000);
   }
   /* USER CODE END 3 */
@@ -162,13 +172,13 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLR = 2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
-    Error_Handler();
+//    //Error_Handler();
   }
   /**Activate the Over-Drive mode 
   */
   if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
-    Error_Handler();
+    //Error_Handler();
   }
   /**Initializes the CPU, AHB and APB busses clocks 
   */
@@ -181,7 +191,7 @@ void SystemClock_Config(void)
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
   {
-    Error_Handler();
+    //Error_Handler();
   }
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_CLK48;
   PeriphClkInitStruct.PLLSAI.PLLSAIM = 8;
@@ -192,7 +202,7 @@ void SystemClock_Config(void)
   PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48CLKSOURCE_PLLSAIP;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
-    Error_Handler();
+    //Error_Handler();
   }
 }
 
@@ -221,7 +231,7 @@ static void MX_USART1_UART_Init(void)
   huart1.Init.OverSampling = UART_OVERSAMPLING_16;
   if (HAL_UART_Init(&huart1) != HAL_OK)
   {
-    Error_Handler();
+    //Error_Handler();
   }
   /* USER CODE BEGIN USART1_Init 2 */
 
@@ -257,7 +267,7 @@ static void MX_USB_OTG_FS_PCD_Init(void)
   hpcd_USB_OTG_FS.Init.use_dedicated_ep1 = DISABLE;
   if (HAL_PCD_Init(&hpcd_USB_OTG_FS) != HAL_OK)
   {
-    Error_Handler();
+    //Error_Handler();
   }
   /* USER CODE BEGIN USB_OTG_FS_Init 2 */
 

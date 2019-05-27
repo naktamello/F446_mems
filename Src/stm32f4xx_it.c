@@ -72,10 +72,10 @@
 
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_usart1_tx;
-extern UART_HandleTypeDef huart1;
-extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 /* USER CODE BEGIN EV */
-
+extern PCD_HandleTypeDef hpcd;
+extern UART_HandleTypeDef UartHandle;
+extern TIM_HandleTypeDef TimHandle;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -222,8 +222,8 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 0 */
 
   /* USER CODE END USART1_IRQn 0 */
-  HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
+  HAL_UART_IRQHandler(&UartHandle);
 
   /* USER CODE END USART1_IRQn 1 */
 }
@@ -236,8 +236,8 @@ void OTG_FS_IRQHandler(void)
   /* USER CODE BEGIN OTG_FS_IRQn 0 */
 
   /* USER CODE END OTG_FS_IRQn 0 */
-  HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
   /* USER CODE BEGIN OTG_FS_IRQn 1 */
+  HAL_PCD_IRQHandler(&hpcd);
 
   /* USER CODE END OTG_FS_IRQn 1 */
 }
@@ -257,6 +257,10 @@ void DMA2_Stream7_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+void TIMx_IRQHandler(void)
+{
+  HAL_TIM_IRQHandler(&TimHandle);
+}
 
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
