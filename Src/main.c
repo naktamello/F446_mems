@@ -44,6 +44,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <string.h>
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -71,6 +72,9 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
 USBD_HandleTypeDef USBD_Device;
+CAN_RxHeaderTypeDef RxHeader;
+uint8_t RxData[8];
+bool canMsg = false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -130,8 +134,8 @@ int main(void)
 //  MX_DMA_Init();
 //  MX_USB_OTG_FS_PCD_Init();
 //  MX_USART1_UART_Init();
-  MX_CAN1_Init();
-  CAN_Config();
+//  MX_CAN1_Init();
+//  CAN_Config();
   /* USER CODE BEGIN 2 */
   char str[32];
   sprintf(str, "usb app\n");
@@ -177,13 +181,13 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLR = 2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
-    Error_Handler();
+//    Error_Handler();
   }
   /**Activate the Over-Drive mode 
   */
   if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
-    Error_Handler();
+//    Error_Handler();
   }
   /**Initializes the CPU, AHB and APB busses clocks 
   */
@@ -196,7 +200,7 @@ void SystemClock_Config(void)
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
   {
-    Error_Handler();
+//    Error_Handler();
   }
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_CLK48;
   PeriphClkInitStruct.PLLSAI.PLLSAIM = 8;
@@ -207,7 +211,7 @@ void SystemClock_Config(void)
   PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48CLKSOURCE_PLLSAIP;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
-    Error_Handler();
+//    Error_Handler();
   }
 }
 
@@ -240,7 +244,7 @@ static void MX_CAN1_Init(void)
   hcan1.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan1) != HAL_OK)
   {
-    Error_Handler();
+//    Error_Handler();
   }
   /* USER CODE BEGIN CAN1_Init 2 */
 
@@ -273,7 +277,7 @@ static void MX_USART1_UART_Init(void)
   huart1.Init.OverSampling = UART_OVERSAMPLING_16;
   if (HAL_UART_Init(&huart1) != HAL_OK)
   {
-    Error_Handler();
+//    Error_Handler();
   }
   /* USER CODE BEGIN USART1_Init 2 */
 
@@ -309,7 +313,7 @@ static void MX_USB_OTG_FS_PCD_Init(void)
   hpcd_USB_OTG_FS.Init.use_dedicated_ep1 = DISABLE;
   if (HAL_PCD_Init(&hpcd_USB_OTG_FS) != HAL_OK)
   {
-    Error_Handler();
+//    Error_Handler();
   }
   /* USER CODE BEGIN USB_OTG_FS_Init 2 */
 
@@ -365,22 +369,34 @@ static void CAN_Config(void) {
 
     if (HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig) != HAL_OK) {
         /* Filter configuration Error */
-        Error_Handler();
+//        Error_Handler();
     }
 
     /*##-3- Start the CAN peripheral ###########################################*/
     if (HAL_CAN_Start(&hcan1) != HAL_OK) {
         /* Start Error */
-        Error_Handler();
+//        Error_Handler();
     }
 
     /*##-4- Activate CAN RX notification #######################################*/
     if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) {
         /* Notification Error */
-        Error_Handler();
+//        Error_Handler();
     }
 }
 
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
+
+    /* Get RX message */
+    if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) != HAL_OK) {
+        /* Reception Error */
+//        Error_Handler();
+    }
+
+    if ((RxHeader.IDE == CAN_ID_STD) && (RxHeader.StdId == 0x1ea)) {
+        canMsg = !canMsg;
+    }
+}
 
 /* USER CODE END 4 */
 
@@ -388,13 +404,13 @@ static void CAN_Config(void) {
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
-void Error_Handler(void)
-{
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-
-  /* USER CODE END Error_Handler_Debug */
-}
+//void Error_Handler(void)
+//{
+//  /* USER CODE BEGIN Error_Handler_Debug */
+//  /* User can add his own implementation to report the HAL error return state */
+//
+//  /* USER CODE END Error_Handler_Debug */
+//}
 
 #ifdef  USE_FULL_ASSERT
 /**

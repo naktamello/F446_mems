@@ -1,0 +1,15 @@
+after updating CubeMX:
+- in main.c: comment the following (handled in USB code)
+//  MX_GPIO_Init();
+//  MX_DMA_Init();
+//  MX_USB_OTG_FS_PCD_Init();
+//  MX_USART1_UART_Init();
+
+- stm32f4xx_it.c:
+HAL_PCD_IRQHandler(&hpcd); // hpcd instead of CubeMX declared USB var
+
+- stm32f4xx_hal_msp.c:
+comment out HAL_PCD_MspInit and DeInit,
+add DMA interrupt to UART_Init
+    HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 6, 0);
+    HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
