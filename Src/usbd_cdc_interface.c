@@ -47,14 +47,12 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define APP_RX_DATA_SIZE  2048
-#define APP_TX_DATA_SIZE  2048
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 USBD_CDC_LineCodingTypeDef LineCoding =
   {
-    115200, /* baud rate*/
+    921600, /* baud rate*/
     0x00,   /* stop bits-1*/
     0x00,   /* parity - none*/
     0x08    /* nb. of bits 8*/
@@ -202,14 +200,14 @@ static int8_t CDC_Itf_Control (uint8_t cmd, uint8_t* pbuf, uint16_t length)
     break;
 
   case CDC_SET_LINE_CODING:
-    LineCoding.bitrate    = (uint32_t)(pbuf[0] | (pbuf[1] << 8) |\
-                            (pbuf[2] << 16) | (pbuf[3] << 24));
-    LineCoding.format     = pbuf[4];
-    LineCoding.paritytype = pbuf[5];
-    LineCoding.datatype   = pbuf[6];
-    
-    /* Set the new configuration */
-    ComPort_Config();
+//    LineCoding.bitrate    = (uint32_t)(pbuf[0] | (pbuf[1] << 8) |\
+//                            (pbuf[2] << 16) | (pbuf[3] << 24));
+//    LineCoding.format     = pbuf[4];
+//    LineCoding.paritytype = pbuf[5];
+//    LineCoding.datatype   = pbuf[6];
+//
+//    /* Set the new configuration */
+//    ComPort_Config();
     break;
 
   case CDC_GET_LINE_CODING:
@@ -333,73 +331,73 @@ static void ComPort_Config(void)
     Error_Handler();
   }
   
-  /* set the Stop bit */
-  switch (LineCoding.format)
-  {
-  case 0:
-    UartHandle.Init.StopBits = UART_STOPBITS_1;
-    break;
-  case 2:
-    UartHandle.Init.StopBits = UART_STOPBITS_2;
-    break;
-  default :
-    UartHandle.Init.StopBits = UART_STOPBITS_1;
-    break;
-  }
-  
-  /* set the parity bit*/
-  switch (LineCoding.paritytype)
-  {
-  case 0:
-    UartHandle.Init.Parity = UART_PARITY_NONE;
-    break;
-  case 1:
-    UartHandle.Init.Parity = UART_PARITY_ODD;
-    break;
-  case 2:
-    UartHandle.Init.Parity = UART_PARITY_EVEN;
-    break;
-  default :
-    UartHandle.Init.Parity = UART_PARITY_NONE;
-    break;
-  }
-  
-  /*set the data type : only 8bits and 9bits is supported */
-  switch (LineCoding.datatype)
-  {
-  case 0x07:
-    /* With this configuration a parity (Even or Odd) must be set */
-    UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
-    break;
-  case 0x08:
-    if(UartHandle.Init.Parity == UART_PARITY_NONE)
-    {
-      UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
-    }
-    else 
-    {
-      UartHandle.Init.WordLength = UART_WORDLENGTH_9B;
-    }
-    
-    break;
-  default :
-    UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
-    break;
-  }
-  
-  UartHandle.Init.BaudRate     = LineCoding.bitrate;
-  UartHandle.Init.HwFlowCtl    = UART_HWCONTROL_NONE;
-  UartHandle.Init.Mode         = UART_MODE_TX_RX;
-  UartHandle.Init.OverSampling = UART_OVERSAMPLING_16;
-  
-  if(HAL_UART_Init(&UartHandle) != HAL_OK)
-  {
-    /* Initialization Error */
-    Error_Handler();
-  }
-
-  /* Start reception: provide the buffer pointer with offset and the buffer size */
-  HAL_UART_Receive_IT(&UartHandle, (uint8_t *)(UserTxBuffer + UserTxBufPtrIn), 1);
+//  /* set the Stop bit */
+//  switch (LineCoding.format)
+//  {
+//  case 0:
+//    UartHandle.Init.StopBits = UART_STOPBITS_1;
+//    break;
+//  case 2:
+//    UartHandle.Init.StopBits = UART_STOPBITS_2;
+//    break;
+//  default :
+//    UartHandle.Init.StopBits = UART_STOPBITS_1;
+//    break;
+//  }
+//
+//  /* set the parity bit*/
+//  switch (LineCoding.paritytype)
+//  {
+//  case 0:
+//    UartHandle.Init.Parity = UART_PARITY_NONE;
+//    break;
+//  case 1:
+//    UartHandle.Init.Parity = UART_PARITY_ODD;
+//    break;
+//  case 2:
+//    UartHandle.Init.Parity = UART_PARITY_EVEN;
+//    break;
+//  default :
+//    UartHandle.Init.Parity = UART_PARITY_NONE;
+//    break;
+//  }
+//
+//  /*set the data type : only 8bits and 9bits is supported */
+//  switch (LineCoding.datatype)
+//  {
+//  case 0x07:
+//    /* With this configuration a parity (Even or Odd) must be set */
+//    UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
+//    break;
+//  case 0x08:
+//    if(UartHandle.Init.Parity == UART_PARITY_NONE)
+//    {
+//      UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
+//    }
+//    else
+//    {
+//      UartHandle.Init.WordLength = UART_WORDLENGTH_9B;
+//    }
+//
+//    break;
+//  default :
+//    UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
+//    break;
+//  }
+//
+//  UartHandle.Init.BaudRate     = LineCoding.bitrate;
+//  UartHandle.Init.HwFlowCtl    = UART_HWCONTROL_NONE;
+//  UartHandle.Init.Mode         = UART_MODE_TX_RX;
+//  UartHandle.Init.OverSampling = UART_OVERSAMPLING_16;
+//
+//  if(HAL_UART_Init(&UartHandle) != HAL_OK)
+//  {
+//    /* Initialization Error */
+//    Error_Handler();
+//  }
+//
+//  /* Start reception: provide the buffer pointer with offset and the buffer size */
+//  HAL_UART_Receive_IT(&UartHandle, (uint8_t *)(UserTxBuffer + UserTxBufPtrIn), 1);
 }
 
 /**

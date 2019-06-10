@@ -81,6 +81,10 @@ extern "C" {
 
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
+#define NSS_Pin GPIO_PIN_7
+#define NSS_GPIO_Port GPIOC
+#define APP_RX_DATA_SIZE  2048
+#define APP_TX_DATA_SIZE  2048
 
 /* USER CODE END Private defines */
 
