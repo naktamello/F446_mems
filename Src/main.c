@@ -96,6 +96,15 @@ static void CAN_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static inline void us_Delay(uint32_t us) {
+    if (us > 1) {
+        volatile uint32_t count = us * 13;
+        while (count--);
+    } else {
+        volatile uint32_t count = 8;
+        while (count--);
+    }
+}
 
 /* USER CODE END 0 */
 
@@ -155,12 +164,32 @@ int main(void)
     uint8_t tx[8] = {0};
     uint8_t rx[8] = {0};
 
+    // set power mode
     tx[0] = (0x2D << 1);
     tx[1] = 0x00;
     HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_RESET);
     HAL_SPI_TransmitReceive(&hspi1, tx, rx, 2, 100);
     HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_SET);
     HAL_Delay(1);
+
+    // write acc range
+//    tx[0] = (0x2C << 1);
+//    tx[1] = 0x83;
+//    HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_RESET);
+//    HAL_SPI_TransmitReceive(&hspi1, tx, rx, 2, 100);
+//    HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_SET);
+//    HAL_Delay(1);
+
+    // write z-axis offset
+//    tx[0] = (0x22 << 1);
+//    tx[1] = Z_OFFSET_H;
+//    tx[2] = Z_OFFSET_L;
+//    HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_RESET);
+//    HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, 100);
+//    HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_SET);
+//    HAL_Delay(1);
+
+    // read from z-axis
     tx[0] = (0x0E << 1) | 0x01;
     tx[1] = 0xFF;
     tx[2] = 0xFF;
@@ -183,7 +212,8 @@ int main(void)
           UserTxBufPtrIn = UserTxBufPtrIn % APP_RX_DATA_SIZE;
       }
       __enable_irq();
-      HAL_Delay(1);
+      us_Delay(10);
+//      HAL_Delay(1);
   }
   /* USER CODE END 3 */
 }
