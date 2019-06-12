@@ -83,6 +83,7 @@ extern uint32_t UserTxBufPtrIn;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
+extern void USB_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
@@ -90,6 +91,8 @@ static void MX_USB_OTG_FS_PCD_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_CAN1_Init(void);
 /* USER CODE BEGIN PFP */
+uint32_t micros(void);
+void delay_us(uint32_t us);
 static void MX_SPI1_Init(void);
 static void CAN_Config(void);
 /* USER CODE END PFP */
@@ -195,25 +198,23 @@ int main(void)
     tx[2] = 0xFF;
     tx[3] = 0xFF;
     HAL_Delay(1);
+    volatile uint32_t timestamp;
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-      __disable_irq();
       HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_RESET);
       HAL_SPI_TransmitReceive(&hspi1, tx, (uint8_t *)(UserTxBuffer + UserTxBufPtrIn), 4, 100);
-//      HAL_SPI_TransmitReceive(&hspi1, tx, rx, 4, 100);
       HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_SET);
+      timestamp = micros();
       *(UserTxBuffer + UserTxBufPtrIn) = 0xF0;
       UserTxBufPtrIn+=4;
       if(UserTxBufPtrIn >= APP_RX_DATA_SIZE)
       {
           UserTxBufPtrIn = UserTxBufPtrIn % APP_RX_DATA_SIZE;
       }
-      __enable_irq();
-      us_Delay(10);
-//      HAL_Delay(1);
+      delay_us(10);
   }
   /* USER CODE END 3 */
 }
@@ -499,6 +500,24 @@ static void CAN_Config(void) {
     }
 }
 
+uint32_t micros(void) {
+    register uint32_t ms, cycle_cnt;
+    do {
+        ms = HAL_GetTick();
+        cycle_cnt = TIM14->CNT;
+    } while (ms != HAL_GetTick());
+
+    return (ms * 1000) + cycle_cnt;
+}
+
+void delay_us(uint32_t us)
+{
+    uint32_t start = micros();
+    while (micros() - start < (uint32_t) us) {
+        __ASM("nop");
+    }
+}
+
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
 
     /* Get RX message */
@@ -510,6 +529,29 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
     if ((RxHeader.IDE == CAN_ID_STD) && (RxHeader.StdId == 0x1ea)) {
         canMsg = !canMsg;
     }
+}
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM14 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    /* USER CODE BEGIN Callback 0 */
+
+    /* USER CODE END Callback 0 */
+    if (htim->Instance == TIM14) {
+        HAL_IncTick();
+    }
+    /* USER CODE BEGIN Callback 1 */
+    else if (htim->Instance == TIMx){
+        USB_TIM_PeriodElapsedCallback(htim);
+    }
+    /* USER CODE END Callback 1 */
 }
 
 /* USER CODE END 4 */
