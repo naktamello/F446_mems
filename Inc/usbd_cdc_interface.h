@@ -93,7 +93,7 @@
 #define TIMx_IRQn                        TIM3_IRQn
 #define TIMx_IRQHandler                  TIM3_IRQHandler
 
-/* Periodically, the state of the buffer "UserTxBuffer" is checked.
+/* Periodically, the state of the buffer "usb_tx_buf" is checked.
    The period depends on CDC_POLLING_INTERVAL */
 #define CDC_POLLING_INTERVAL             5 /* in ms. The max is 65 and the min is 1 */
 

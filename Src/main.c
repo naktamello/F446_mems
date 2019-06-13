@@ -65,8 +65,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 /* Private variables ---------------------------------------------------------*/
-CAN_HandleTypeDef hcan1;
-
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_tx;
 
@@ -74,12 +72,9 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
 SPI_HandleTypeDef hspi1;
-USBD_HandleTypeDef USBD_Device;
-CAN_RxHeaderTypeDef RxHeader;
-uint8_t RxData[8];
-bool canMsg = false;
-extern uint8_t UserTxBuffer[APP_TX_DATA_SIZE];
-extern uint32_t UserTxBufPtrIn;
+USBD_HandleTypeDef husbd;
+extern uint8_t usb_tx_buf[APP_TX_DATA_SIZE];
+extern uint32_t usb_tx_ptr_in;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -89,12 +84,10 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USB_OTG_FS_PCD_Init(void);
 static void MX_USART1_UART_Init(void);
-static void MX_CAN1_Init(void);
 /* USER CODE BEGIN PFP */
 uint32_t micros(void);
 void delay_us(uint32_t us);
 static void MX_SPI1_Init(void);
-static void CAN_Config(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -135,16 +128,16 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
   /* Init Device Library */
-  USBD_Init(&USBD_Device, &VCP_Desc, 0);
+  USBD_Init(&husbd, &VCP_Desc, 0);
 
   /* Add Supported Class */
-  USBD_RegisterClass(&USBD_Device, USBD_CDC_CLASS);
+  USBD_RegisterClass(&husbd, USBD_CDC_CLASS);
 
   /* Add CDC Interface Class */
-  USBD_CDC_RegisterInterface(&USBD_Device, &USBD_CDC_fops);
+  USBD_CDC_RegisterInterface(&husbd, &USBD_CDC_fops);
 
   /* Start Device Process */
-  USBD_Start(&USBD_Device);
+  USBD_Start(&husbd);
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -152,9 +145,7 @@ int main(void)
 //  MX_DMA_Init();
 //  MX_USB_OTG_FS_PCD_Init();
 //  MX_USART1_UART_Init();
-  MX_CAN1_Init();
   /* USER CODE BEGIN 2 */
-  CAN_Config();
   MX_SPI1_Init();
   char str[32];
   sprintf(str, "usb app\n");
@@ -205,14 +196,14 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
       HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_RESET);
-      HAL_SPI_TransmitReceive(&hspi1, tx, (uint8_t *)(UserTxBuffer + UserTxBufPtrIn), 4, 100);
+      HAL_SPI_TransmitReceive(&hspi1, tx, (uint8_t *)(usb_tx_buf + usb_tx_ptr_in), 4, 100);
       HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_SET);
       timestamp = micros();
-      *(UserTxBuffer + UserTxBufPtrIn) = 0xF0;
-      UserTxBufPtrIn+=4;
-      if(UserTxBufPtrIn >= APP_RX_DATA_SIZE)
+      *(usb_tx_buf + usb_tx_ptr_in) = 0xF0;
+      usb_tx_ptr_in+=4;
+      if(usb_tx_ptr_in >= APP_RX_DATA_SIZE)
       {
-          UserTxBufPtrIn = UserTxBufPtrIn % APP_RX_DATA_SIZE;
+          usb_tx_ptr_in = usb_tx_ptr_in % APP_RX_DATA_SIZE;
       }
       delay_us(10);
   }
@@ -280,42 +271,6 @@ void SystemClock_Config(void)
   }
 }
 
-/**
-  * @brief CAN1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_CAN1_Init(void)
-{
-
-  /* USER CODE BEGIN CAN1_Init 0 */
-
-  /* USER CODE END CAN1_Init 0 */
-
-  /* USER CODE BEGIN CAN1_Init 1 */
-
-  /* USER CODE END CAN1_Init 1 */
-  hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 9;
-  hcan1.Init.Mode = CAN_MODE_NORMAL;
-  hcan1.Init.SyncJumpWidth = CAN_SJW_4TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_15TQ;
-  hcan1.Init.TimeSeg2 = CAN_BS2_4TQ;
-  hcan1.Init.TimeTriggeredMode = DISABLE;
-  hcan1.Init.AutoBusOff = ENABLE;
-  hcan1.Init.AutoWakeUp = ENABLE;
-  hcan1.Init.AutoRetransmission = ENABLE;
-  hcan1.Init.ReceiveFifoLocked = DISABLE;
-  hcan1.Init.TransmitFifoPriority = DISABLE;
-  if (HAL_CAN_Init(&hcan1) != HAL_OK)
-  {
-//    Error_Handler();
-  }
-  /* USER CODE BEGIN CAN1_Init 2 */
-
-  /* USER CODE END CAN1_Init 2 */
-
-}
 
 /**
   * @brief USART1 Initialization Function
@@ -467,38 +422,6 @@ static void MX_SPI1_Init(void)
 }
 
 
-static void CAN_Config(void) {
-    CAN_FilterTypeDef sFilterConfig;
-
-    /*##-2- Configure the CAN Filter ###########################################*/
-    sFilterConfig.FilterBank = 0;
-    sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
-    sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
-    sFilterConfig.FilterIdHigh = 0xF000;
-    sFilterConfig.FilterIdLow = 0x0000;
-    sFilterConfig.FilterMaskIdHigh = 0x0000;
-    sFilterConfig.FilterMaskIdLow = 0x0000;
-    sFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
-    sFilterConfig.FilterActivation = ENABLE;
-    sFilterConfig.SlaveStartFilterBank = 14;
-
-    if (HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig) != HAL_OK) {
-        /* Filter configuration Error */
-//        Error_Handler();
-    }
-
-    /*##-3- Start the CAN peripheral ###########################################*/
-    if (HAL_CAN_Start(&hcan1) != HAL_OK) {
-        /* Start Error */
-//        Error_Handler();
-    }
-
-    /*##-4- Activate CAN RX notification #######################################*/
-    if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) {
-        /* Notification Error */
-//        Error_Handler();
-    }
-}
 
 uint32_t micros(void) {
     register uint32_t ms, cycle_cnt;
@@ -518,18 +441,6 @@ void delay_us(uint32_t us)
     }
 }
 
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
-
-    /* Get RX message */
-    if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) != HAL_OK) {
-        /* Reception Error */
-//        Error_Handler();
-    }
-
-    if ((RxHeader.IDE == CAN_ID_STD) && (RxHeader.StdId == 0x1ea)) {
-        canMsg = !canMsg;
-    }
-}
 
 /**
   * @brief  Period elapsed callback in non blocking mode
