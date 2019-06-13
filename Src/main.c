@@ -45,6 +45,8 @@
 /* USER CODE BEGIN Includes */
 #include <string.h>
 #include <stdbool.h>
+#include "utils.h"
+#include "adxl357.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -85,22 +87,12 @@ static void MX_DMA_Init(void);
 static void MX_USB_OTG_FS_PCD_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
-uint32_t micros(void);
-void delay_us(uint32_t us);
 static void MX_SPI1_Init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static inline void us_Delay(uint32_t us) {
-    if (us > 1) {
-        volatile uint32_t count = us * 13;
-        while (count--);
-    } else {
-        volatile uint32_t count = 8;
-        while (count--);
-    }
-}
+
 
 /* USER CODE END 0 */
 
@@ -147,14 +139,11 @@ int main(void)
 //  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   MX_SPI1_Init();
-  char str[32];
-  sprintf(str, "usb app\n");
+  ADXL357_Init(&hspi1, NSS_GPIO_Port, NSS_Pin);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
-
     uint8_t tx[8] = {0};
     uint8_t rx[8] = {0};
 
@@ -421,25 +410,6 @@ static void MX_SPI1_Init(void)
 
 }
 
-
-
-uint32_t micros(void) {
-    register uint32_t ms, cycle_cnt;
-    do {
-        ms = HAL_GetTick();
-        cycle_cnt = TIM14->CNT;
-    } while (ms != HAL_GetTick());
-
-    return (ms * 1000) + cycle_cnt;
-}
-
-void delay_us(uint32_t us)
-{
-    uint32_t start = micros();
-    while (micros() - start < (uint32_t) us) {
-        __ASM("nop");
-    }
-}
 
 
 /**

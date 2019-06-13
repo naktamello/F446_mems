@@ -85,9 +85,6 @@ extern "C" {
 #define NSS_GPIO_Port GPIOC
 #define APP_RX_DATA_SIZE  2048
 #define APP_TX_DATA_SIZE  2048
-#define Z_OFFSET_RAW     35475
-#define Z_OFFSET_H       0x08
-#define Z_OFFSET_L       0xA9
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
