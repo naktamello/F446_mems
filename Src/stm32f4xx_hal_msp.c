@@ -226,15 +226,6 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
   /* USER CODE BEGIN USART1_MspInit 1 */
 
-        /*##-6- Enable TIM peripherals Clock #######################################*/
-                TIMx_CLK_ENABLE();
-
-        /*##-7- Configure the NVIC for TIMx ########################################*/
-        /* Set Interrupt Group Priority */
-        HAL_NVIC_SetPriority(TIMx_IRQn, 6, 0);
-
-        /* Enable the TIMx global Interrupt */
-        HAL_NVIC_EnableIRQ(TIMx_IRQn);
   /* USER CODE END USART1_MspInit 1 */
   }
 

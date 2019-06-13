@@ -44,7 +44,7 @@
   */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include <stdbool.h>
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 
@@ -64,6 +64,7 @@ uint32_t usb_tx_ptr_in = 0;/* Increment this pointer or roll it back to
                                start address when data are received over USART */
 uint32_t usb_tx_ptr_out = 0; /* Increment this pointer or roll it back to
                                  start address when data are sent over USB */
+uint32_t usb_tx_ptr_tail = APP_TX_DATA_SIZE;
 
 /* UART handler declaration */
 UART_HandleTypeDef huart_usb;
@@ -89,7 +90,7 @@ static void Error_Handler(void);
 
 static void ComPort_Config(void);
 
-static void TIM_Config(void);
+void USB_TIM_Config(void);
 
 USBD_CDC_ItfTypeDef USBD_CDC_fops =
         {
@@ -138,14 +139,11 @@ static int8_t CDC_Itf_Init(void) {
     }
 
     /*##-3- Configure the TIM Base generation  #################################*/
-    TIM_Config();
+    USB_TIM_Config();
 
     /*##-4- Start the TIM Base generation in interrupt mode ####################*/
     /* Start Channel1 */
-    if (HAL_TIM_Base_Start_IT(&htim_usb) != HAL_OK) {
-        /* Starting Error */
-        Error_Handler();
-    }
+
 
     /*##-5- Set Application Buffers ############################################*/
     USBD_CDC_SetTxBuffer(&husbd, usb_tx_buf, 0);
@@ -200,7 +198,7 @@ static int8_t CDC_Itf_Control(uint8_t cmd, uint8_t *pbuf, uint16_t length) {
             break;
 
         case CDC_SET_LINE_CODING:
-//            Set_LineCoding(pbuf);
+            Set_LineCoding(pbuf);
             break;
 
         case CDC_GET_LINE_CODING:
@@ -231,22 +229,24 @@ void USB_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     uint32_t buffptr;
     uint32_t buffsize;
 
-    if (usb_tx_ptr_out != usb_tx_ptr_in) {
-        if (usb_tx_ptr_out > usb_tx_ptr_in) /* Rollback */
-        {
-            buffsize = APP_TX_DATA_SIZE - usb_tx_ptr_out;
-        } else {
-            buffsize = usb_tx_ptr_in - usb_tx_ptr_out;
-        }
+    if (husbd.pClassData != NULL) {
+        if (usb_tx_ptr_out != usb_tx_ptr_in) {
+            if (usb_tx_ptr_out > usb_tx_ptr_in) /* Rollback */
+            {
+                buffsize = usb_tx_ptr_tail - usb_tx_ptr_out;
+            } else {
+                buffsize = usb_tx_ptr_in - usb_tx_ptr_out;
+            }
 
-        buffptr = usb_tx_ptr_out;
+            buffptr = usb_tx_ptr_out;
 
-        USBD_CDC_SetTxBuffer(&husbd, &usb_tx_buf[buffptr], (uint16_t) buffsize);
+            USBD_CDC_SetTxBuffer(&husbd, &usb_tx_buf[buffptr], (uint16_t) buffsize);
 
-        if (USBD_CDC_TransmitPacket(&husbd) == USBD_OK) {
-            usb_tx_ptr_out += buffsize;
-            if (usb_tx_ptr_out == APP_RX_DATA_SIZE) {
-                usb_tx_ptr_out = 0;
+            if (USBD_CDC_TransmitPacket(&husbd) == USBD_OK) {
+                usb_tx_ptr_out += buffsize;
+                if (usb_tx_ptr_out >= usb_tx_ptr_tail) {
+                    usb_tx_ptr_out = 0;
+                }
             }
         }
     }
@@ -394,7 +394,7 @@ static void ComPort_Config(void) {
   * @param  None.
   * @retval None
   */
-static void TIM_Config(void) {
+void USB_TIM_Config(void) {
     /* Set TIMx instance */
     htim_usb.Instance = TIMx;
 
@@ -408,10 +408,30 @@ static void TIM_Config(void) {
     htim_usb.Init.Prescaler = 84 - 1;
     htim_usb.Init.ClockDivision = 0;
     htim_usb.Init.CounterMode = TIM_COUNTERMODE_UP;
+
+
+    /*##-6- Enable TIM peripherals Clock #######################################*/
+    TIMx_CLK_ENABLE();
+
+
+
     if (HAL_TIM_Base_Init(&htim_usb) != HAL_OK) {
         /* Initialization Error */
         Error_Handler();
     }
+
+    /*##-7- Configure the NVIC for TIMx ########################################*/
+    /* Set Interrupt Group Priority */
+    HAL_NVIC_SetPriority(TIMx_IRQn, 6, 0);
+
+    /* Enable the TIMx global Interrupt */
+    HAL_NVIC_EnableIRQ(TIMx_IRQn);
+
+    if (HAL_TIM_Base_Start_IT(&htim_usb) != HAL_OK) {
+        /* Starting Error */
+        Error_Handler();
+    }
+
 }
 
 /**

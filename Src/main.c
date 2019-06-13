@@ -77,6 +77,7 @@ SPI_HandleTypeDef hspi1;
 USBD_HandleTypeDef husbd;
 extern uint8_t usb_tx_buf[APP_TX_DATA_SIZE];
 extern uint32_t usb_tx_ptr_in;
+extern uint32_t usb_tx_ptr_tail;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -130,6 +131,7 @@ int main(void)
 
   /* Start Device Process */
   USBD_Start(&husbd);
+//    USB_TIM_Config();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -144,57 +146,32 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-    uint8_t tx[8] = {0};
-    uint8_t rx[8] = {0};
+    uint8_t rx[10] = {0};
+    ADXL357_PowerUp();
 
-    // set power mode
-    tx[0] = (0x2D << 1);
-    tx[1] = 0x00;
-    HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_RESET);
-    HAL_SPI_TransmitReceive(&hspi1, tx, rx, 2, 100);
-    HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_SET);
-    HAL_Delay(1);
-
-    // write acc range
-//    tx[0] = (0x2C << 1);
-//    tx[1] = 0x83;
-//    HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_RESET);
-//    HAL_SPI_TransmitReceive(&hspi1, tx, rx, 2, 100);
-//    HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_SET);
-//    HAL_Delay(1);
-
-    // write z-axis offset
-//    tx[0] = (0x22 << 1);
-//    tx[1] = Z_OFFSET_H;
-//    tx[2] = Z_OFFSET_L;
-//    HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_RESET);
-//    HAL_SPI_TransmitReceive(&hspi1, tx, rx, 3, 100);
-//    HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_SET);
-//    HAL_Delay(1);
-
-    // read from z-axis
-    tx[0] = (0x0E << 1) | 0x01;
-    tx[1] = 0xFF;
-    tx[2] = 0xFF;
-    tx[3] = 0xFF;
-    HAL_Delay(1);
     volatile uint32_t timestamp;
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-      HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_RESET);
-      HAL_SPI_TransmitReceive(&hspi1, tx, (uint8_t *)(usb_tx_buf + usb_tx_ptr_in), 4, 100);
-      HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_SET);
-      timestamp = micros();
-      *(usb_tx_buf + usb_tx_ptr_in) = 0xF0;
-      usb_tx_ptr_in+=4;
-      if(usb_tx_ptr_in >= APP_RX_DATA_SIZE)
-      {
-          usb_tx_ptr_in = usb_tx_ptr_in % APP_RX_DATA_SIZE;
-      }
-      delay_us(10);
+          __set_BASEPRI(5<<4);
+
+          if(usb_tx_ptr_in + 14 >= APP_RX_DATA_SIZE)
+          {
+//              usb_tx_ptr_in = usb_tx_ptr_in % APP_RX_DATA_SIZE;
+              usb_tx_ptr_tail = usb_tx_ptr_in;
+              usb_tx_ptr_in = 0;
+          }
+          ADXL357_AccData((usb_tx_buf + usb_tx_ptr_in));
+          timestamp = micros();
+          *(usb_tx_buf + usb_tx_ptr_in) = 0xF0;
+          serialize_int32(timestamp, (usb_tx_buf + usb_tx_ptr_in + 10));
+          usb_tx_ptr_in+=14;
+
+          __set_BASEPRI(0);
+          delay_us(10);
+
   }
   /* USER CODE END 3 */
 }

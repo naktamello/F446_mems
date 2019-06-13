@@ -1,9 +1,17 @@
 #ifndef F446_MEMS_ADXL357_H
 #define F446_MEMS_ADXL357_H
 
+#include <stdbool.h>
+#include <memory.h>
 #include <stm32f4xx_hal.h>
 
+#define ADXL357_TX_LEN              10
+
 #define ADXL357_VAL_PWRUP            0x00
+
+#define ADXL357_RANGE_10G            0x81
+#define ADXL357_RANGE_20G            0x82
+#define ADXL357_RANGE_40G            0x83
 
 #define ADXL357_VAL_Z_OFFSET_RAW     35475
 #define ADXL357_VAL_Z_OFFSET_H       0x08
@@ -48,5 +56,13 @@
 
 #endif //F446_MEMS_ADXL357_H
 
+enum ADXL357_Range{
+    range10g = ADXL357_RANGE_10G,
+    range20g = ADXL357_RANGE_20G,
+    range40g = ADXL357_RANGE_40G
+};
+
 void ADXL357_Init(SPI_HandleTypeDef* pspi, GPIO_TypeDef* spi_nss_port, uint16_t spi_nss_pin);
-void ADXL357_PowerUp(uint8_t* rxbuf);
+void ADXL357_PowerUp();
+void ADXL357_AccData(uint8_t* rxbuf);
+void ADXL357_SetRange(enum ADXL357_Range range);

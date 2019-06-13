@@ -13,3 +13,6 @@ comment out HAL_PCD_MspInit and DeInit,
 add DMA interrupt to UART_Init
     HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 6, 0);
     HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
+
+- CMakeLists.txt:
+add_definitions(-DUSE_USB_HS)

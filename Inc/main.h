@@ -84,7 +84,9 @@ extern "C" {
 #define NSS_Pin GPIO_PIN_7
 #define NSS_GPIO_Port GPIOC
 #define APP_RX_DATA_SIZE  2048
+//#define APP_RX_DATA_SIZE  32
 #define APP_TX_DATA_SIZE  2048
+//#define APP_TX_DATA_SIZE  32
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
