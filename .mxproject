@@ -1,7 +1,7 @@
 [PreviousGenFiles]
-HeaderPath=/home/camel/programs/c_projects/F446_usb/F446_usb/Inc
+HeaderPath=/home/camel/programs/c_projects/F446_mems/F446_mems/Inc
 HeaderFiles=stm32f4xx_it.h;stm32f4xx_hal_conf.h;main.h;
-SourcePath=/home/camel/programs/c_projects/F446_usb/F446_usb/Src
+SourcePath=/home/camel/programs/c_projects/F446_mems/F446_mems/Src
 SourceFiles=stm32f4xx_it.c;stm32f4xx_hal_msp.c;main.c;
 
 [PreviousLibFiles]
