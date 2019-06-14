@@ -157,17 +157,18 @@ int main(void)
     /* USER CODE BEGIN 3 */
           __set_BASEPRI(5<<4);
 
-          if(usb_tx_ptr_in + 14 >= APP_RX_DATA_SIZE)
+          if(usb_tx_ptr_in + 16 >= APP_RX_DATA_SIZE)
           {
-//              usb_tx_ptr_in = usb_tx_ptr_in % APP_RX_DATA_SIZE;
               usb_tx_ptr_tail = usb_tx_ptr_in;
               usb_tx_ptr_in = 0;
           }
-          ADXL357_AccData((usb_tx_buf + usb_tx_ptr_in));
+          ADXL357_AccData((usb_tx_buf + usb_tx_ptr_in+3));
           timestamp = micros();
-          *(usb_tx_buf + usb_tx_ptr_in) = 0xF0;
-          serialize_int32(timestamp, (usb_tx_buf + usb_tx_ptr_in + 10));
-          usb_tx_ptr_in+=14;
+          *(usb_tx_buf + usb_tx_ptr_in) = 0x00;
+          *(usb_tx_buf + usb_tx_ptr_in + 1) = 0x01;
+          *(usb_tx_buf + usb_tx_ptr_in + 2) = 0x02;
+          serialize_int32(timestamp, (usb_tx_buf + usb_tx_ptr_in + 12));
+          usb_tx_ptr_in+=16;
 
           __set_BASEPRI(0);
           delay_us(10);
